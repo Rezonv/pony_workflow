@@ -408,6 +408,7 @@ const CharacterManager: React.FC<Props> = ({
                                 bondInfo={bondInfo}
                                 milestones={milestones}
                                 onStartSpecialStory={onStartSpecialStory}
+                                onUpdateAffection={onUpdateAffection}
                             />
                         )}
                     </div>
