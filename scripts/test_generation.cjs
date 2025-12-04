@@ -22,9 +22,9 @@ if (!apiKey) {
 }
 
 // 2. Configuration
-const ENDPOINT_ID = "bwjknqtwdohmxr"; // Serverless Endpoint
-const LORA_FILENAME = "Aglaea-pony-Tanger.safetensors";
-const PROMPT = "score_9, score_8_up, score_7_up, score_6_up, source_anime, rating_explicit, 1girl, solo, looking at viewer, masterpiece, best quality, aglaea";
+const ENDPOINT_ID = "oaoz89pkudyfbn"; // Serverless Endpoint
+const LORA_FILENAME = "lora_439481.safetensors";
+const PROMPT = "score_9, score_8_up, score_7_up, score_6_up, source_anime, rating_explicit, 1girl, solo, looking at viewer, masterpiece, best quality, herta (honkai: star rail)";
 
 // 3. RunPod Payload (ComfyUI Workflow)
 const workflow = {
