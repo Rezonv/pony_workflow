@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status.
 
 # Define User Agent to bypass Civitai blocking
 USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -12,7 +13,7 @@ wget --header="User-Agent: $USER_AGENT" -O /comfyui/models/checkpoints/pony_v6_x
 
 echo "Downloading LoRAs..."
 
-# Function to download with retry
+# Function to download with retry and validation
 download_lora() {
     url=$1
     filename=$2
@@ -21,13 +22,24 @@ download_lora() {
     echo "Downloading $filename..."
     wget --header="User-Agent: $USER_AGENT" -O "$filepath" "$url"
     
-    # Check if file is too small (likely HTML error page)
+    # Validation 1: Check file size (must be > 10KB)
     filesize=$(stat -c%s "$filepath")
     if [ "$filesize" -lt 10000 ]; then
         echo "ERROR: File $filename is too small ($filesize bytes). Likely an error page."
         cat "$filepath"
         exit 1
     fi
+
+    # Validation 2: Check for HTML content (Civitai error pages)
+    # We check the first few lines for common HTML tags
+    if head -n 10 "$filepath" | grep -qEi "<!DOCTYPE|html|body|Cloudflare"; then
+        echo "ERROR: File $filename appears to be an HTML page (likely 403 Forbidden)."
+        echo "First 10 lines of content:"
+        head -n 10 "$filepath"
+        exit 1
+    fi
+    
+    echo "Verified: $filename ($filesize bytes)"
 }
 
 download_lora "https://civitai.com/api/download/models/439481?type=Model&format=SafeTensor" "lora_439481.safetensors"
