@@ -504,22 +504,20 @@ export const generateCharacterImage = async (
   // Generate SD Prompt
   let { prompt: sdPrompt, negativePrompt } = await generateSDPrompt(character, cleanAction, referenceImageUrl, loraTag, loraTrigger);
 
-  // Pony / RunPod Optimized Prompt
-  const ponyPrefix = "score_9, score_8_up, score_7_up, score_6_up, source_anime, rating_explicit";
-  const fullPrompt = `${ponyPrefix}, ${sdPrompt}, looking at viewer, ${AESTHETIC_TAGS}, ${SPICY_TAGS}`;
+  // NoobAI / Illustrious Optimized Prompt (User switched model)
+  const illustriousPrefix = "masterpiece, best quality, very aesthetic, absurdres, newest, safe, sensitive"; // 'safe' can be removed if strictly NSFW but NoobAI likes quality tags
+  const fullPrompt = `${illustriousPrefix}, ${sdPrompt}, looking at viewer, ${AESTHETIC_TAGS}`; // Removed SPICY_TAGS from default, let sdPrompt handle it
 
   console.log(`Generating Character Image via RunPod (Hardcoded)...`);
   if (charLoraName) {
     console.log(`Using Character LoRA: ${charLoraName} (Strength: ${charLoraStrength})`);
   }
 
-  // Call RunPod with Character LoRA
+  // Call RunPod (No LoRA)
   return await generateImageRunPod(
     fullPrompt,
     settings || {} as ImageGenerationSettings,
-    negativePrompt,
-    charLoraName,
-    charLoraStrength
+    negativePrompt
   );
 };
 
@@ -833,7 +831,7 @@ const generateSDPrompt = async (character: Character, actionText: string, refere
   const charCount = mode === 'sex' ? '1girl, 1boy' : '1girl'; // Simple logic: Sex = 1g+1b, Solo = 1g
 
   // Character Appearance: Use LoRA trigger if available, otherwise description
-  const charAppearance = loraTrigger ? `${loraTrigger}, ${character.appearance}` : character.appearance;
+  const charAppearance = loraTrigger ? `${loraTrigger}, ${character.description}` : character.description;
 
   let finalPrompt = `${qualityTags}, ${charCount}, ${charAppearance}, ${actionTags}`;
 
@@ -849,16 +847,17 @@ const generateSDPrompt = async (character: Character, actionText: string, refere
   }
 
   // 5. Negative Prompt
-  const negativePrompt = NEGATIVE_PROMPT;
+  // 5. Negative Prompt (Standard SDXL/Illustrious)
+  const negativePrompt = "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, bad feet";
 
   return { prompt: finalPrompt, negativePrompt };
 };
 
 // --- RunPod Image Generation (ComfyUI) ---
-const generateImageRunPod = async (prompt: string, settings: ImageGenerationSettings, negativePrompt?: string, characterLoraName?: string, characterLoraStrength?: number): Promise<string | null> => {
+const generateImageRunPod = async (prompt: string, settings: ImageGenerationSettings, negativePrompt?: string): Promise<string | null> => {
   try {
     // Hardcoded Credentials (User Request)
-    const endpointId = "bwjknqtwdohmxr"; // Updated Endpoint ID
+    const endpointId = "r1jygm0t3ubrw6"; // Updated Endpoint ID
     const apiKey = (process.env.RUNPOD_API_KEY || "").trim(); // Ensure this is set in .env.local
 
     const runUrl = `https://api.runpod.ai/v2/${endpointId}/run`;
@@ -878,7 +877,7 @@ const generateImageRunPod = async (prompt: string, settings: ImageGenerationSett
           "sampler_name": "dpmpp_2m",
           "scheduler": "karras",
           "denoise": 1,
-          "model": ["11", 0], // Connect to LoRA Model output
+          "model": ["4", 0], // Connect DIRECTLY to Checkpoint
           "positive": ["6", 0],
           "negative": ["7", 0],
           "latent_image": ["5", 0]
@@ -887,19 +886,9 @@ const generateImageRunPod = async (prompt: string, settings: ImageGenerationSett
       },
       "4": {
         "inputs": {
-          "ckpt_name": "pony_v6_xl.safetensors"
+          "ckpt_name": "JANKUTrainedNoobaiRouwei_v60.safetensors"
         },
         "class_type": "CheckpointLoaderSimple"
-      },
-      "11": { // LoraLoader
-        "inputs": {
-          "lora_name": characterLoraName || "None", // Use passed LoRA name or skip
-          "strength_model": characterLoraStrength || 1.0,
-          "strength_clip": 1.0,
-          "model": ["4", 0],
-          "clip": ["4", 1]
-        },
-        "class_type": "LoraLoader"
       },
       "5": {
         "inputs": {
@@ -912,7 +901,7 @@ const generateImageRunPod = async (prompt: string, settings: ImageGenerationSett
       "10": { // CLIP Set Last Layer (Clip Skip 2)
         "inputs": {
           "stop_at_clip_layer": -2,
-          "clip": ["11", 1] // Connect to LoRA CLIP output
+          "clip": ["4", 1] // Connect DIRECTLY to Checkpoint CLIP
         },
         "class_type": "CLIPSetLastLayer"
       },
@@ -925,7 +914,7 @@ const generateImageRunPod = async (prompt: string, settings: ImageGenerationSett
       },
       "7": {
         "inputs": {
-          "text": negativePrompt || "score_6, score_5, score_4, source_pony, source_furry, text, error, watermark, username, signature, artist name, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality",
+          "text": negativePrompt || "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name",
           "clip": ["10", 0] // Connect to CLIP Skip node
         },
         "class_type": "CLIPTextEncode"

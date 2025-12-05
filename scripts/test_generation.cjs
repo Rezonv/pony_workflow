@@ -22,9 +22,8 @@ if (!apiKey) {
 }
 
 // 2. Configuration
-const ENDPOINT_ID = "oaoz89pkudyfbn"; // Serverless Endpoint
-const LORA_FILENAME = "lora_439481.safetensors";
-const PROMPT = "score_9, score_8_up, score_7_up, score_6_up, source_anime, rating_explicit, 1girl, solo, looking at viewer, masterpiece, best quality, herta (honkai: star rail)";
+const ENDPOINT_ID = "r1jygm0t3ubrw6"; // Serverless Endpoint
+const PROMPT = "masterpiece, best quality, very aesthetic, absurdres, 1girl, solo, looking at viewer, herta (honkai: star rail)";
 
 // 3. RunPod Payload (ComfyUI Workflow)
 const workflow = {
@@ -36,7 +35,7 @@ const workflow = {
             "sampler_name": "dpmpp_2m",
             "scheduler": "karras",
             "denoise": 1,
-            "model": ["11", 0],
+            "model": ["4", 0],
             "positive": ["6", 0],
             "negative": ["7", 0],
             "latent_image": ["5", 0]
@@ -45,19 +44,9 @@ const workflow = {
     },
     "4": {
         "inputs": {
-            "ckpt_name": "pony_v6_xl.safetensors"
+            "ckpt_name": "JANKUTrainedNoobaiRouwei_v60.safetensors"
         },
         "class_type": "CheckpointLoaderSimple"
-    },
-    "11": {
-        "inputs": {
-            "lora_name": LORA_FILENAME,
-            "strength_model": 1.0,
-            "strength_clip": 1.0,
-            "model": ["4", 0],
-            "clip": ["4", 1]
-        },
-        "class_type": "LoraLoader"
     },
     "5": {
         "inputs": {
@@ -70,7 +59,7 @@ const workflow = {
     "10": {
         "inputs": {
             "stop_at_clip_layer": -2,
-            "clip": ["11", 1]
+            "clip": ["4", 1]
         },
         "class_type": "CLIPSetLastLayer"
     },
@@ -83,7 +72,7 @@ const workflow = {
     },
     "7": {
         "inputs": {
-            "text": "score_4, score_5, score_6, low quality, bad anatomy",
+            "text": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
             "clip": ["10", 0]
         },
         "class_type": "CLIPTextEncode"
@@ -141,7 +130,7 @@ function request(method, path, body) {
 // 5. Main Execution
 async function run() {
     console.log(`Starting test generation on SERVERLESS: ${ENDPOINT_ID}...`);
-    console.log(`Using LoRA: ${LORA_FILENAME}`);
+    // console.log(`Using LoRA: ${LORA_FILENAME}`);
 
     try {
         const runRes = await request('POST', 'run', payload);

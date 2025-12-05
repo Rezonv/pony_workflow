@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-const ENDPOINT_ID = "qbpqn6s67r2rwi";
+const ENDPOINT_ID = "r1jygm0t3ubrw6";
 const API_KEY = process.env.RUNPOD_API_KEY;
 
 async function listModels() {
@@ -73,12 +73,17 @@ async function listModels() {
             body: JSON.stringify({ input: { workflow: workflow } })
         });
 
-        const data = await response.json();
-        console.log("Response:", JSON.stringify(data, null, 2));
+        const text = await response.text();
+        console.log("Raw Response:", text);
 
-        if (data.id) {
-            console.log(`Job ${data.id} started. Polling for error...`);
-            await pollForError(data.id);
+        try {
+            const data = JSON.parse(text);
+            if (data.id) {
+                console.log(`Job ${data.id} started. Polling for error...`);
+                await pollForError(data.id);
+            }
+        } catch (e) {
+            console.error("Failed to parse JSON response:", e);
         }
 
     } catch (error) {

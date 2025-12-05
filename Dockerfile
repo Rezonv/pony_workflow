@@ -2,7 +2,7 @@
 FROM runpod/worker-comfyui:5.5.0-base
 
 # 安裝 wget (確保有工具)
-RUN apt-get update && apt-get install -y wget
+RUN apt-get update && apt-get install -y wget curl
 
 # 複製下載腳本到容器根目錄
 COPY scripts/install_models.sh /install_models.sh
